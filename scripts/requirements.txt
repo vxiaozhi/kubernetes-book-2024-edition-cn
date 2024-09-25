@@ -1,0 +1,3 @@
+langchain
+langchain-openai
+#split_markdown4gpt
