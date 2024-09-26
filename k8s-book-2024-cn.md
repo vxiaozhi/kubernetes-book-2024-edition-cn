@@ -1507,14 +1507,17 @@ OCI runtime exec failed:...... "curl": executable file not found in $PATH
 
 运行以下命令，为**hello-pod** Pod中的第一个容器创建一个exec会话。您的shell提示符将更改，表示您已连接到容器的shell。
 
+```
 $ kubectl exec -it hello-pod -- sh
 
 #
+```
 
 **-it**标志告诉**kubectl exec**通过将您的shell的STDIN和STDOUT流连接到Pod中第一个容器的STDIN和STDOUT来使会话交互。**sh**命令在会话中启动一个新的shell进程，您的提示符将更改，表示您现在在容器内部。
 
 从exec会话中运行以下命令，安装**curl**二进制文件，然后执行**curl**命令。
 
+```
 # apk add curl
 
 <Snip>
@@ -1522,6 +1525,7 @@ $ kubectl exec -it hello-pod -- sh
 # curl localhost:8080
 
 <html><head><title>K8s rocks!</title><link rel="stylesheet" href="http://netdna....
+```
 
 对于正在运行的Pod来说，像这样对其进行更改是一个反模式，因为Pod被设计为不可变对象。然而，对于演示目的来说是可以的。
 
