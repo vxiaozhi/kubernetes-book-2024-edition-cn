@@ -1000,29 +1000,24 @@ Kubernetes上的每个应用都在Pod内部运行。
 - Pod理论
 - Pods的实践操作
 
-```
+
 如果我们即将涵盖的内容中有一些感觉熟悉，那是因为我们正在构建在第2章引入的一些概念之上。
-```
+
 
 我们即将发现Kubernetes使用Pods来运行许多不同的工作负载类型。然而，大多数情况下，Pods运行容器，因此我们将在大多数示例中引用容器。
 
 ### Pod理论。
 
-```
+
 Kubernetes出于许多原因使用Pods。它们是一个抽象层，它们使资源共享、添加功能、增强调度等。
 让我们更详细地看一下其中一些。
-```
 
-```
 Pods是一个抽象层
-```
 
-```
 Pods抽象了不同工作负载类型的细节。这意味着您可以在其中运行容器、虚拟机、无服务器函数和Wasm应用程序，而Kubernetes并不知道区别。
 使用Pods作为一个抽象层对Kubernetes以及工作负载都有好处：
-```
 
-4: 与Pods一起工作 37
+
 
 - _Kubernetes_ 可以专注于部署和管理Pods，而不必关心它们内部的内容
 - 不同类型的 _工作负载_ 可以在同一个集群上并行运行，利用声明式Kubernetes API的全部功能，并获得Pods的所有其他益处
@@ -1048,15 +1043,12 @@ Pods以许多方式增强工作负载，包括以下所有内容：
 - 安全策略
 - 终止控制
 
-(^4) https://knative.dev/
-(^5) https://kubevirt.io/
-
-4: 与Pods一起工作 38
 
 - 卷
 
 以下命令显示了Pod属性的完整列表，并返回超过1000行。
 
+```
 $ kubectl explain pods --recursive
 KIND: Pod
 VERSION: v1
@@ -1071,34 +1063,33 @@ labels <map[string]string>
 name <string>
 namespace <string>
 <Snip>
+```
 
 您甚至可以深入到特定的Pod属性，并查看其支持的值。以下示例深入到Pod _restartPolicy_ 属性。
 
+```
 $ kubectl explain pod.spec.restartPolicy
 KIND: Pod
 VERSION: v1
 FIELD: restartPolicy <string>
 DESCRIPTION:
-Pod中所有容器的重启策略。始终、失败时或从不之一。默认为始终。
-更多信息：https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/...
-可能的枚举值：
-
-- `"始终"`
-- `"从不"`
-- `"失败时"`
+  Restart policy for all containers within the pod. One of Always, OnFailure, Never.
+  Default to Always.
+  More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/...
+  Possible enum values:
+  - `"Always"`
+  - `"Never"`
+  - `"OnFailure"`
+```
 
 尽管Pods添加了这么多内容，但它们是轻量级的，并且几乎没有额外的开销。
 
 **Pods实现资源共享**
+
 Pods运行一个或多个容器，而同一Pod中的所有容器共享Pod的执行环境。这包括：
 
 - 共享的文件系统和卷（mnt命名空间）
 - 共享的网络堆栈（net命名空间）
-
-```
-4: 使用Pod 39
-```
-
 - 共享的内存（IPC命名空间）
 - 共享的进程树（pid命名空间）
 - 共享的主机名（uts命名空间）
@@ -1113,19 +1104,16 @@ Pods运行一个或多个容器，而同一Pod中的所有容器共享Pod的执�
 
 其他应用程序和客户端可以通过Pod的10.0.10.15 IP地址访问容器-主应用程序容器可以在端口8080上访问，而边车容器可以在端口5005上访问。如果它们需要在Pod内部相互通信，它们可以使用Pod的本地适配器。两个容器还会挂载Pod的卷，并可以使用它来共享数据。例如，边车容器可以从远程Git仓库同步静态内容，并将其存储在卷中，主应用程序容器可以读取并将其作为Web页面提供。
 
-```
-Pod和调度
-```
 
-```
+**Pod和调度**
+
+
+
 Kubernetes保证将同一Pod中的所有容器调度到同一群集节点。尽管如此，只有当容器需要共享内存、卷和网络等资源时，才应将它们放在同一Pod中。如果您的唯一要求是将两个工作负载调度到同一节点上，应将它们放在各自的Pod中，并使用以下选项之一将它们一起调度。
-```
 
-```
+
 术语：在进一步进行之前，请记住，节点是可以是物理服务器、虚拟机或云实例的主机服务器。Pod将容器封装并在节点上执行。
-```
 
-4: 使用Pod 40
 
 Pod提供了许多高级调度功能，包括以下所有内容：
 
@@ -1157,7 +1145,6 @@ _亲和性_和_反亲和性_规则类似于更强大的nodeSelector。
 
 资源请求和资源限制非常重要，每个Pod都应该使用它们。它们告诉调度器Pod需要多少CPU和内存，调度器使用它们来选择具有足够资源的节点。如果您不指定它们，调度器无法知道Pod需要什么资源，并可能将其调度到资源不足的节点。
 
-4: 使用Pod 41
 
 **部署Pods**
 
@@ -1295,17 +1282,19 @@ Pod是Kubernetes上调度的原子单位，抽象了其中的工作负载细节�
 ### 与Pod一起动手实践。
 
 如果你正在跟随操作，请克隆本书的GitHub仓库，并从**pods**文件夹运行所有命令。
+
+```
 $ git clone https://github.com/nigelpoulton/TheK8sBook.git
 正在克隆到 'TheK8sBook'...
 
 $ cd TheK8sBook/pods
+```
 
 **Pod清单文件**
 
 让我们先看看我们的第一个Pod清单文件。这是来自pods文件夹的pod.yml文件。
 
-4：使用Pod 48
-
+```
 kind: Pod
 apiVersion: v1
 metadata:
@@ -1324,6 +1313,7 @@ containers:
       limits:
       memory: 128Mi
       cpu: 0.5
+```
 
 这是一个简单的示例，但你可以立即看到四个顶级字段：
 
@@ -1348,7 +1338,6 @@ containers:
 
 快速的侧步。
 
-4：使用Pod 49
 
 Kubernetes的YAML文件是优秀的文档来源，您可以使用它们快速了解新团队成员的基本功能和要求，以及帮助弥合开发人员和运维人员之间的差距。
 
@@ -1360,16 +1349,20 @@ Nirmal Mehta在他2017年的DockerCon演讲中将这些附加好处描述为一�
 
 运行以下**kubectl apply**命令来部署Pod。该命令将**pod.yml**文件发送到当前_kubeconfig_文件定义的API服务器，并附加来自kubeconfig文件的凭据。
 
+```
 $ kubectl apply -f pod.yml
 pod/hello-pod已创建
+```
 
 尽管输出显示Pod已创建，但它可能仍在拉取镜像和启动容器。
 
 运行**kubectl get pods**来检查状态。
 
+```
 $ kubectl get pods
 名称 已就绪 状态 重启时长
 hello-pod 0/1 正在创建容器 0 9秒
+```
 
 该示例中的Pod尚未完全创建完成-**READY**列显示为零个容器就绪，**STATUS**列显示原因。
 
@@ -1383,14 +1376,13 @@ hello-pod 0/1 正在创建容器 0 9秒
 
 让我们看一下您将使用**kubectl**监视和检查Pod的主要方式。
 
-4：使用Pod 50
-
 **kubectl get**
 
 您已经运行过**kubectl get pods**命令，并且看到它返回了一行基本信息。然而，以下标志可以获得更多的信息：
 
 - **-o wide**提供更多的列，但仍然是单行输出
 - **-o yaml**获取Kubernetes对对象的所有了解
+
 下面的示例展示了使用`kubectl get pods`命令和`-o yaml`选项的输出结果。由于篇幅限制，输出结果被截断，但请注意它被分为两个主要部分：
 
 - spec（规范）
@@ -1498,10 +1490,10 @@ $ kubectl logs logtest --container syncer
 
 您可以使用`kubectl exec`有两种方式：
 
-```
+
 1. 远程命令执行
 2. 执行会话
-```
+
 
 远程命令执行允许您从本地shell发送命令到容器。容器执行命令并将输出返回到您的shell中。
 一个_exec session_将您的本地shell连接到容器的shell，与登录到容器相同。
@@ -1510,12 +1502,12 @@ $ kubectl logs logtest --container syncer
 
 从您的本地shell运行以下命令。它要求**hello-pod** Pod中的第一个容器运行**ps**命令。
 
-4: 使用Pods 53
-
+```
 $ kubectl exec hello-pod -- ps
 PID USER TIME COMMAND
 1 root 0:00 node ./app.js
 17 root 0:00 ps aux
+```
 
 容器执行了**ps**命令，并在您的本地终端显示了结果。
 
@@ -1523,8 +1515,10 @@ PID USER TIME COMMAND
 
 尝试运行以下命令。
 
+```
 $ kubectl exec hello-pod -- curl localhost:8080
 OCI runtime exec failed:...... "curl": executable file not found in $PATH
+```
 
 此命令失败，因为容器中没有安装**curl**命令。
 
@@ -1554,7 +1548,6 @@ $ kubectl exec -it hello-pod -- sh
 
 对于正在运行的Pod来说，像这样对其进行更改是一个反模式，因为Pod被设计为不可变对象。然而，对于演示目的来说是可以的。
 
-4: 使用Pods 54
 
 **Pod主机名**
 
@@ -1562,17 +1555,21 @@ Pod的名称来自其YAML文件的**metadata.name**字段，Kubernetes将其用�
 
 如果您正在跟随操作，您将部署一个名为**hello-pod**的单个Pod。您从以下YAML文件部署它，并将Pod名称设置为**hello-pod**。
 
+```
 kind: Pod
 apiVersion: v1
 metadata:
 name: hello-pod <<==== Pod主机名。被所有容器继承。
 labels:
 <Snip>
+```
 
 从现有的exec会话中运行以下命令，以检查容器的主机名。该命令区分大小写。
 
+```
 $ env | grep HOSTNAME
 HOSTNAME=hello-pod
+```
 
 如您所见，容器的主机名与Pod的名称匹配。如果是多容器Pod，所有容器将具有相同的主机名。
 
@@ -1607,8 +1604,10 @@ Kubernetes通过阻止对正在运行的Pod的配置进行更改来处理_对象
 ```
 $ kubectl edit pod hello-pod
 ```
+
 ```
 ＃请编辑下面的对象。以“＃”开头的行将被忽略...
+
 apiVersion：v1
 kind：Pod
 metadata：
@@ -1622,7 +1621,6 @@ resourceVersion：“432621”
 uid：a131fb37-ceb4-4484-9e23-26c0b9e7b4f4
 spec：
 containers：
-```
 
 - image：nigelpoulton / k8sbook：1.0
   imagePullPolicy：IfNotPresent
@@ -1639,13 +1637,10 @@ containers：
       memory：256Mi <<====尝试更改此处
 
 ```
+
 编辑文件，保存更改，然后关闭编辑器。您将收到一条消息，告诉您更改被禁止，因为属性是不可变的。
 如果您在kubectl编辑会话中被卡住，可以通过键入以下组合键退出：：q，然后按回车键。
-```
 
-```
-4：处理Pod 56
-```
 
 **资源请求和资源限制**
 
@@ -1670,10 +1665,9 @@ cpu：1.0
 memory：512Mi
 ```
 
-```
+
 此容器需要至少256Mi内存和半个CPU。调度程序读取此信息并将其分配给具有足够资源的节点。如果无法找到合适的节点，则将Pod标记为待处理状态，然后集群自动缩放器将尝试提供新的集群节点。
 假设调度程序找到了一个合适的节点，它会将Pod分配给该节点，然后kubelet会下载Pod规范并要求本地运行时启动它。作为该过程的一部分，kubelet会保留所请求的CPU和内存，确保资源在需要时可用。它还基于每个容器的资源限制设置资源使用上限。在此示例中，它将CPU限制设置为一个，内存限制设置为512Mi。大多数运行时还会执行资源限制，但每个运行时如何实现这一点可能会有所不同。
-```
 
 容器在执行时，其最低要求（_请求_）是有保证的。但是，如果节点有额外可用资源，它可以使用更多，但是不能超过您在其_限制_中指定的值。
 对于多容器的Pod，调度程序将所有容器的请求组合起来，并找到具有足够资源以满足整个Pod的节点。
@@ -1681,12 +1675,11 @@ memory：512Mi
 
 **多容器Pod示例 - 初始化容器**
 
-```
+
 以下YAML定义了一个带有初始化容器和主应用容器的多容器Pod。它来自于本书GitHub存储库的pods文件夹中的initpod.yml文件。
+
+
 ```
-
-4：处理Pod 57
-
 apiVersion：v1
 kind：Pod
 metadata：
@@ -1705,6 +1698,7 @@ initContainers：
       image：nigelpoulton/web-app：1.0
       ports：
       - containerPort：8080
+```
 
 在**spec.initContainers**块下定义一个容器会将其变为初始化容器，Kubernetes保证它会在常规容器之前运行并完成。
 
@@ -1713,6 +1707,7 @@ initContainers：
 
 使用以下命令部署多容器Pod，然后使用**--watch**标志运行**kubectl get pods**命令，查看它是否启动。
 
+```
 $ kubectl apply -f initpod.yml
 pod/initpod created
 
@@ -1720,10 +1715,11 @@ $ kubectl get pods --watch
 NAME READY STATUS RESTARTS AGE
 initpod 0/1 Init:0/1 0 6s
 
+```
+
 **Init:0/1**状态告诉您初始化容器仍在运行，这意味着主容器尚未启动。如果运行**kubectl describe**命令，您将看到整个Pod的状态是**Pending**。
 
-4: 使用Pod 58
-
+```
 $ kubectl describe pod initpod
 Name: initpod
 Namespace: default
@@ -1734,11 +1730,13 @@ Labels: app=initializer
 Annotations: <none>
 Status: Pending <<==== Pod状态
 <Snip>
+```
 
 Pod将保持在此阶段，直到您创建一个名为**k8sbook**的服务。
 
 运行以下命令创建服务并重新检查Pod状态。
 
+```
 $ kubectl apply -f initsvc.yml
 service/k8sbook created
 
@@ -1747,6 +1745,7 @@ NAME READY STATUS RESTARTS AGE
 initpod 0/1 Init:0/1 0 15s
 initpod 0/1 PodInitializing 0 3m39s
 initpod 1/1 Running 0 3m57s
+```
 
 初始化容器在服务出现后立即完成，并启动主应用容器。请给它几秒钟来完全启动。
 
@@ -1812,10 +1811,6 @@ containers:
 3. 部署应用程序
 4. 连接到应用程序并查看显示“这是版本1.0”
 5. 对GitHub存储库的分叉进行更改
-
-4：使用Pod 60
-
-
 6. 确认您的更改出现在网页上
 
 
@@ -1914,7 +1909,6 @@ Pod可以是单容器或多容器的，多容器Pod中的所有容器共享Pod�
 
 ### 命名空间简介。
 
-```
 首先要知道的是，Kubernetes的命名空间（Namespaces）与内核命名空间（kernel namespaces）不同。
 
 - 内核命名空间将操作系统划分为称为容器（containers）的虚拟操作系统
@@ -1929,8 +1923,8 @@ Pod可以是单容器或多容器的，多容器Pod中的所有容器共享Pod�
 
 以下命令显示对象是否有命名空间。正如您所看到的，大多数对象有命名空间，这意味着您可以将它们部署到特定的命名空间并应用自定义策略和配额。而不具有命名空间的对象（如节点和持久化卷）是集群范围的（cluster-scoped），无法隔离到命名空间。
 
-5: 使用命名空间的虚拟集群 63
 
+```
 $ kubectl api-resources
 名称 缩写 ... 是否有命名空间 类型
 节点 nodes 否 Node
@@ -1944,6 +1938,7 @@ Pod模板 podtemplates 是 PodTemplate
 服务账户 serviceaccounts 是 ServiceAccount
 服务 services 是 Service
 <剪辑>
+```
 
 除非您另行指定，否则Kubernetes会将对象部署到默认命名空间（default Namespace）。
 
@@ -2049,18 +2044,16 @@ labels:
 env: marvel
 ```
 
-```
+
 使用以下命令创建它。
-```
 
 ```
 $ kubectl apply -f shield-ns.yml
 namespace/shield created
 ```
 
-```
 列出所有命名空间，查看您创建的两个新命名空间。
-```
+
 
 ```
 $ kubectl get ns
@@ -2070,10 +2063,9 @@ hydra Active 49s
 shield Active 3s
 ```
 
-```
 如果您对漫威电影宇宙有所了解，您将知道Shield和Hydra是势不两立的敌人，它们不应该只通过命名空间来分隔而共享同一集群。
 删除hydra命名空间。
-```
+
 
 ```
 $ kubectl delete ns hydra
@@ -2105,11 +2097,11 @@ Context "tkb" modified.
 - 命令式地
 - 声明式地
 
-要以命令式方式执行此操作，将**-n**或**--namespace**标志添加到命令中。要以声明式方式执行此操作，您需要在对象的YAML清单中指定命名空间。
+要以命令式方式执行此操作，将 -n 或 --namespace 标志添加到命令中。要以声明式方式执行此操作，您需要在对象的YAML清单中指定命名空间。
 
 让我们使用声明式方法将一个应用程序部署到**shield**命名空间。
 
-应用程序在本书的GitHub仓库的**namespaces**文件夹中的**app.yml**文件中定义。它定义了三个对象：ServiceAccount、Service和Pod。以下YAML片段显示了所有三个对象都针对**shield**命名空间。
+应用程序在本书的GitHub仓库的 **namespaces** 文件夹中的 **app.yml** 文件中定义。它定义了三个对象：ServiceAccount、Service和Pod。以下YAML片段显示了所有三个对象都针对**shield**命名空间。
 
 如果您不理解YAML文件中的所有内容，不要担心，您只需要知道它定义了三个对象，并将每个对象都定位到**shield**命名空间。
 
@@ -2143,8 +2135,6 @@ namespace：shield <<==== 命名空间
 name：triskelion
 <Snip>
 ```
-
-5：带有命名空间的虚拟集群 68
 
 使用以下命令部署它。如果出现关于ServiceAccount缺少注释的警告，请不必担心。
 
