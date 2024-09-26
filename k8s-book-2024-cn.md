@@ -1737,9 +1737,6 @@ initpod 1/1 Running 0 3m57s
 
 以下的YAML文件定义了一个多容器Pod，其中两个容器都挂载了相同的共享卷。将主应用容器放在第一个容器，然后是边车容器是常见的做法。
 
-```
-4: 使用Pod 59
-```
 
 ```
 apiVersion: v1
@@ -1750,7 +1747,7 @@ labels:
 app: sidecar
 spec:
 containers:
-```
+
 
 - name: ctr-web <<==== 第一个容器（主应用）
   image: nginx
@@ -1774,16 +1771,17 @@ containers:
       volumes:
 - name: html <<==== 共享卷
   emptyDir: {}
-
 ```
+
 主应用容器的名称为ctr-web。它基于一个NGINX镜像，并从共享的html卷加载一个静态网页。
 第二个容器的名称为ctr-sync，它是边车容器。它监视一个GitHub仓库，并将更改同步到相同的共享html卷中。
-```
+
 
 当GitHub仓库的内容发生变化时，边车容器将更新复制到共享卷中，应用容器会注意到并提供更新后的网页。
 
 我们将按照以下步骤进行演示：
-```
+
+
 1. 分叉GitHub存储库
 2. 使用您分叉的存储库的URL更新YAML文件
 3. 部署应用程序
@@ -1792,9 +1790,9 @@ containers:
 
 4：使用Pod 60
 
-```
+
 6. 确认您的更改出现在网页上
-```
+
 
 转到GitHub并“分叉”以下存储库。您需要一个GitHub账户来执行此操作。
 
@@ -1804,9 +1802,11 @@ https://github.com/nigelpoulton/ps-sidecar
 
 运行以下命令来部署应用程序。它将部署Pod以及您将用于连接到应用程序的Service。
 
+```
 $ kubectl apply -f sidecarpod.yml
 pod/git-sync created
 service/svc-sidecar created
+```
 
 使用**kubectl get pods**命令检查Pod的状态。
 
@@ -1837,6 +1837,7 @@ git-sync svc-sidecar
 
 使用以下命令删除它们。
 
+```
 $ kubectl delete pod hello-pod initpod git-sync
 pod "hello-pod" deleted
 pod "initpod" deleted
@@ -1845,15 +1846,18 @@ pod "git-sync" deleted
 $ kubectl delete svc k8sbook svc-sidecar
 service "k8sbook" deleted
 service "svc-sidecar" deleted
+```
 
 您还可以使用它们的YAML文件删除对象。
 
+```
 $ kubectl delete -f sidecarpod.yml -f initpod.yml -f pod.yml -f initsvc.yml
 pod "git-sync" deleted
 service "svc-sidecar" deleted
 pod "initpod" deleted
 pod "hello-pod" deleted
 service "k8sbook" deleted
+```
 
 您可能还想删除您对GitHub存储库的分叉。
 
