@@ -1808,7 +1808,7 @@ pod/git-sync created
 service/svc-sidecar created
 ```
 
-使用**kubectl get pods**命令检查Pod的状态。
+使用 **kubectl get pods** 命令检查Pod的状态。
 
 一旦Pod进入“running”状态，运行**kubectl get svc**命令并复制**EXTERNAL-IP**列中的值。如果您正在运行Docker Desktop集群或其他本地选项，则可能显示为“localhost”。
 
@@ -1822,7 +1822,7 @@ service/svc-sidecar created
 
 恭喜您。附属容器成功地监视了远程Git存储库，将更改同步到共享卷，并且主应用程序容器更新了网页。
 
-随意运行**kubectl get pods**和**kubectl describe pod**命令，以查看多容器Pod在输出中的显示方式。
+随意运行 **kubectl get pods** 和 **kubectl describe pod** 命令，以查看多容器Pod在输出中的显示方式。
 
 ### 清理
 
