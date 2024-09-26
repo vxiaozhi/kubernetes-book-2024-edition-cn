@@ -3960,7 +3960,6 @@ Figure9.5
 
 我们将完成以下所有操作：
 
-```
 1.构建一个简单的Web应用
 2.将其编译为Wasm二进制文件
 3.将其构建为OCI镜像
@@ -3968,21 +3967,16 @@ Figure9.5
 5.构建一个多节点的Kubernetes集群
 6.为Wasm配置集群
 7.将应用部署到Kubernetes
-```
 
-```
+
+
 如果您计划进行以下操作，请确保您拥有以下内容。如果没有，请安装：
-```
 
 - Docker Desktop 4.27.1或更高版本
-
-```
-9: WebAssembly on Kubernetes 131
-```
-
 - k3d 5.6.0或更高版本
 - Rust 1.72或更高版本，安装了**wasm32-wasi**目标
 - Spin 2.0或更高版本
+
 第三章介绍了如何安装Docker Desktop和k3d。在后续的步骤中，您将构建一个新的k3d集群。
 访问https://www.rust-lang.org/tools/install以安装Rust。
 安装完Rust后，运行以下命令安装wasm32-wasi目标，以便Rust可以将代码编译为Wasm二进制文件。
@@ -4072,6 +4066,7 @@ FROM scratch
 COPY /target/wasm32-wasi/release/tkb_wasm.wasm.
 COPY spin.toml.
 ```
+
 **限制**
 请根据英文内容直接翻译，维持原有的格式，不省略任何信息。
 
@@ -4083,42 +4078,43 @@ COPY spin.toml.
 
 编辑**spin.toml**文件，并去掉**[component.tkb-wasm]**字段中的前导路径，使其看起来像这样。代码片段中的注释只是为了向您展示需要更改的行，不要将其包含在您的文件中。
 
-9: 在Kubernetes上使用WebAssembly 134
-
+```
 $ vim spin.toml
 <Snip>
 [component.tkb-wasm]
 source = "tkb_wasm.wasm" <<==== 删除该行中的前导路径
 <Snip>
+```
 
 此时，您已经准备好了以下内容：
 
 - 一个Wasm应用程序（Wasm二进制文件）
-- 一个**spin.toml**文件，告诉spin Wasm运行时如何执行Wasm应用程序
-- 一个**Dockerfile**，告诉Docker如何将Wasm应用程序构建为OCI镜像
+- 一个 **spin.toml** 文件，告诉spin Wasm运行时如何执行Wasm应用程序
+- 一个 **Dockerfile** ，告诉Docker如何将Wasm应用程序构建为OCI镜像
 
 运行以下命令将Wasm应用程序构建为OCI镜像。如果您计划在以后的步骤中将其推送到注册表中，需要在最后一行使用不同的镜像名称。
 
+```
 $ docker build \
 --platform wasi/wasm \
 --provenance=false \
 -t nigelpoulton/k8sbook:wasm-0.1.
+```
 
-**--platform wasi/wasm**标志设置镜像的操作系统和架构。类似于**docker run**的工具可以在运行时读取这些属性，帮助它们创建容器并运行应用程序。
+**--platform wasi/wasm** 标志设置镜像的操作系统和架构。类似于**docker run**的工具可以在运行时读取这些属性，帮助它们创建容器并运行应用程序。
 
 检查本地机器上是否存在该镜像。随时运行**docker inspect**命令来验证操作系统和架构属性。
 
+```
 $ docker images
 REPOSITORY TAG IMAGE ID CREATED SIZE
 nigelpoulton/k8sbook wasm-0.1 30ba15a926fe 2 mins ago 620kB
+```
 
 注意镜像的大小是多么小。类似的_hello world_ Linux容器通常有几兆字节的大小。
 
 恭喜您，您已经创建了一个Wasm应用程序，并将其构建为可以推送到注册表的OCI镜像，以便Kubernetes在后续步骤中拉取它。您不必将镜像推送到注册表，因为后面有一个预先创建好的镜像可以使用。但是，如果您决定将其推送到注册表，您需要用前面步骤中创建的镜像标签替换该镜像标签。您还需要一个注册表账户来推送镜像。
 
-```
-9: 在Kubernetes上使用WebAssembly 135
-```
 
 ```
 $ docker push nigelpoulton/k8sbook:wasm-0.1
@@ -4131,6 +4127,7 @@ wasm-0.1: digest: sha256:30ba15a926fef07bf9d8...b2608b2033f45ff5 size: 695
 到目前为止，您已经编写了一个应用程序，将其编译为Wasm，打包为OCI镜像，并将其推送到注册表。接下来，我们将构建和配置一个可以运行Wasm应用程序的Kubernetes集群。
 
 **构建和配置用于Wasm的Kubernetes**
+
 这个部分要求您在笔记本电脑或其他本地机器上构建一个新的k3d Kubernetes集群。它基于一个特殊的k3d镜像，该镜像包含了其他k3d集群所不包含的预安装的Wasm组件。这意味着我们在第三章中展示给您的构建k3d集群对这些示例是无效的，如果您想跟随这些示例，您需要构建我们即将演示的集群。这是因为Wasm还非常新，不是所有的Kubernetes发行版都包含运行Wasm所需的组件。这将在未来发生变化。
 您将在本节中完成以下所有步骤：
 
@@ -4204,6 +4201,7 @@ runtime_type = "io.containerd.spin.v1"
 [plugins.cri.containerd.runtimes.slight]
 runtime_type = "io.containerd.slight.v1"
 ```
+
 <限制> 
 请根据英文内容直接翻译，维持原有的格式，不省略任何信息。
 
@@ -4219,9 +4217,9 @@ runtime_type = "io.containerd.wws.v1"
 runtime_type = "io.containerd.lunatic.v1"
 ```
 
-```
+
 您也可以运行以下命令来验证活动的containerd配置。该命令会解析输出以查找对Spin Wasm shim的引用。
-```
+
 
 ```
 $ containerd --config \
@@ -4236,7 +4234,6 @@ runtime_type = "io.containerd.spin.v2"
 [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.spin.options]
 ```
 
-```
 您已确认containerd正在运行并且已经存在和注册了Wasm shims。这意味着该节点可以运行Wasm容器。
 在示例k3d集群中，所有节点都运行相同的shims，这意味着每个节点都可以运行Wasm应用程序，无需进一步操作。然而，大多数现实世界的环境中，节点配置是异构的，不同的节点具有不同的shims和运行时。在这些情况下，您需要为节点打上标签并创建RuntimeClasses，以帮助Kubernetes将工作调度到正确的节点。
 
@@ -4248,18 +4245,17 @@ $ kubectl label nodes k3d-wasm-agent-1 wasm=yes
 node/k3d-wasm-agent-1 labeled
 ```
 
-```
 验证操作是否成功。您的输出可能包含更多的标签。
+
 ```
-
-9: WebAssembly on Kubernetes 138
-
 $ kubectl get nodes --show-labels | grep wasm=yes
 NAME STATUS ROLES LABELS
 k3d-wasm-agent-0 Ready <none> beta.kubernetes...,wasm=yes
+```
 
 运行以下命令创建名为"rc-spin"的RuntimeClass。
 
+```
 kubectl apply -f - <<EOF
 apiVersion: node.k8s.io/v1
 kind: RuntimeClass
@@ -4270,14 +4266,17 @@ nodeSelector:
 wasm: "yes"
 handler: spin
 EOF
+```
 
 "scheduling.nodeSelector"字段确保使用此RuntimeClass的Pod仅在带有"wasm=yes"标签的节点上调度。"handler"字段告诉containerd使用"spin" shim来执行Wasm应用程序。
 
 检查资源是否正确创建。
 
+```
 $ kubectl get runtimeclass
 NAME HANDLER AGE
 rc-spin spin 1m
+```
 
 此时，Kubernetes集群已具备运行Wasm工作负载所需的一切 - "agent-1"工作节点已经打上标签并安装了四个Wasm shims，并且存在一个RuntimeClass来将Wasm任务调度到该节点。
 
@@ -4289,8 +4288,8 @@ https://github.com/nigelpoulton/TheK8sBook/tree/main/wasm/app.yml
 
 Deployment YAML的重要部分是Pod规范中对RuntimeClass的引用。这将确保所有三个副本都被调度到满足RuntimeClass中的"nodeSelector"要求的节点（具有"wasm=yes"标签的节点）。在我们的示例中，所有三个副本都将被调度到agent-1节点。
 
-9: WebAssembly on Kubernetes 139
 
+```
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -4310,6 +4309,7 @@ containers:
 - name: testwasm
   image: nigelpoulton/k8sbook:wasm-0.1 <<==== 预先创建的镜像
   command: ["/"]
+```
 
 还有一个在YAML片段中未显示的Ingress和Service。Ingress将到达"/"路径的流量定向到名为"wasm-spin"的ClusterIP Service。然后，Service将流量转发到所有具有"app=wasm"标签的Pod的80端口。在Deployment中定义的副本都具有"app=wasm"标签。
 交通流量如图9.6所示。
@@ -4321,9 +4321,6 @@ Figure9.6
 下一步将使用书籍的GitHub仓库中的**app.yml**文件部署应用程序。
 这个YAML文件使用了书籍的Docker Hub仓库中预先创建的Wasm镜像。如果您想使用之前步骤中创建的镜像，可以编辑本地的**app.yml**文件，更改**image**字段，并在下面的**kubectl apply**命令中引用本地**app.yml**。
 
-```
-9: 在Kubernetes上使用WebAssembly 140
-```
 
 ```
 $ kubectl apply \
@@ -4333,9 +4330,8 @@ service/svc-wasm created
 ingress.networking.k8s.io/ing-wasm created
 ```
 
-```
 使用kubectl get deploy wasm-spin命令检查部署的状态。
-```
+
 
 等待三个副本都准备好后，运行以下命令确保它们都被调度到**agent-1**工作节点上。
 
@@ -4347,46 +4343,40 @@ wasm-spin-5f6fccc557-c2tq7 1/1 Running ... k3d-wasm-agent-1
 wasm-spin-5f6fccc557-ft6nz 1/1 Running ... k3d-wasm-agent-1
 ```
 
-```
+
 Kubernetes已将所有三个副本调度到了agent-1节点上。这意味着标签和RuntimeClass按预期工作。
 使用以下curl命令测试应用程序。您也可以将浏览器指向http://localhost:5005/tkb。
-```
+
 
 ```
 $ curl http://localhost:5005/tkb
 The Kubernetes Book loves Wasm!
 ```
 
-```
+
 恭喜，Wasm应用程序正在您的Kubernetes集群上运行！
-```
+
 
 **清理**
 
-```
+
 如果您按照操作进行，您将拥有以下所有可能希望清理的工件：
-```
 
 - 名为**wasm**的k3d Kubernetes集群
 - 存储在OCI注册表中的Wasm OCI镜像
 - 本地主机上的Wasm OCI镜像
 - 本地机器上的Spin应用程序
 
-```
 清理Kubernetes集群的最简单方法是将其删除。如果您为这些练习构建了一个专用的k3d集群，可以使用此命令删除它。
-```
 
-```
-9: 在Kubernetes上使用WebAssembly 141
-```
 
 ```
 $ k3d cluster delete wasm
 ```
 
-```
+
 如果您只想保留集群并删除资源，请运行以下两个命令。
-```
+
 
 ```
 $ kubectl delete \
@@ -4681,6 +4671,7 @@ ClusterIP位于名为服务网络的特殊网络中，没有路由到它！这�
 图10.8
 ```
 
+```
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -4713,7 +4704,6 @@ containers:
 
 apiVersion: apps/v1
 
-10: 服务发现深入探讨 154
 
 kind: Deployment
 metadata:
@@ -4774,11 +4764,11 @@ containers:
   image: ubuntu
   tty: true
   stdin: true
-
-10: Service discovery deep dive 155
+```
 
 运行以下命令来部署所有内容。您需要从**service-discovery**目录中运行该命令。
 
+```
 $ kubectl apply -f sd-example.yml
 namespace/dev created
 namespace/prod created
@@ -4787,9 +4777,11 @@ deployment.apps/enterprise created
 service/ent created
 service/ent created
 pod/jump-pod created
+```
 
 检查所有内容是否正确部署。输出已被修剪以适应本书，并未显示所有对象。
 
+```
 $ kubectl get all --namespace dev
 NAME READY UP-TO-DATE AVAILABLE AGE
 deployment.apps/enterprise 2/2 2 2 51s
@@ -4805,6 +4797,7 @@ deployment.apps/enterprise 2/2 2 2 1m24s
 NAME TYPE CLUSTER-IP EXTERNAL-IP PORT(S) AGE
 service/ent ClusterIP 10.96.147.32 <none> 8080/TCP 1m25s
 <snip>
+```
 
 您有两个命名空间，一个叫**dev**，另一个叫**prod**，每个命名空间都有一个**enterprise**应用的实例和一个**ent**服务的实例。**dev**命名空间还有一个独立的名为**jump**的Pod。
 
@@ -4812,24 +4805,25 @@ service/ent ClusterIP 10.96.147.32 <none> 8080/TCP 1m25s
 
 您将执行以下所有操作：
 
-```
+
 1.登录到dev命名空间中的jump Pod
 2.检查其/etc/resolv.conf文件
 3.连接到本地dev命名空间中的ent服务的实例
 4.连接到远程prod命名空间中的ent服务的实例
-```
+
 
 每个命名空间中的应用版本返回不同的消息，以确保您已连接到正确的实例。
 
 打开一个交互式的exec会话，连接到jump Pod中的容器。您的终端提示符将更改以指示您已连接到容器。
 
-10: Service discovery deep dive 156
-
+```
 $ kubectl exec -it jump --namespace dev -- bash
 root@jump:/#
+```
 
 检查容器的**/etc/resolv.conf**文件的内容。它应该包含您集群的**kube-dns**服务的IP地址，以及**dev**命名空间（dev.svc.cluster.local）的搜索域。
 
+```
 # cat /etc/resolv.conf
 
 search dev.svc.cluster.local svc.cluster.local cluster.local
@@ -4841,23 +4835,29 @@ options ndots:5
 # apt-get update && apt-get install curl -y
 
 <snip>
+```
 
 运行以下**curl**命令来连接本地**dev**命名空间中的**ent**服务的8080端口。
 
+```
 # curl ent:8080
 
 来自DEV命名空间的问候！
 主机名：enterprise-76fc64bd9-lvzsn
+```
 
 “来自DEV命名空间的问候！”的响应证明连接已达到**dev**命名空间中的实例。
 
 容器自动将dev.svc.cluster.local附加到名称并将查询发送到**/etc/resolv.conf**文件中指定的集群DNS。集群DNS返回本地**dev**命名空间中**ent**服务的ClusterIP，应用程序将流量发送到该IP地址。在流量到达节点的默认网关之前，该流量在节点的内核中引发一个陷阱，并被重定向到托管应用程序的Pod。
 
 运行另一个**curl**命令，但这次附加**prod**命名空间的域名。这将导致集群DNS返回**prod**命名空间中服务的ClusterIP。
+
+```
 # curl ent.prod.svc.cluster.local:8080
 
 来自PROD命名空间的问候！
 主机名：enterprise-5cfcd578d7-nvzlp
+```
 
 这次，响应来自**prod**命名空间中的Pod。
 
@@ -4931,16 +4931,20 @@ kube-dns-jb72g   IPv4      9153,53,53   10.244.1.9,10.244.1.14   14d
 
 以下命令启动一个名为**dnsutils**的新的独立Pod，并连接到您的终端。它基于刚提到的镜像，可能需要几秒钟启动。
 
+```
 $ kubectl run -it dnsutils \
 --image registry.k8s.io/e2e-test-images/jessie-dnsutils:1.7
+```
 检测集群DNS是否工作的常见方法是使用nslookup命令解析kubernetes服务。这个命令在每个集群上运行，并将API服务器暴露给所有Pods。查询应返回一个IP地址和名为kubernetes.default.svc.cluster.local的名称。
 
+```
 # nslookup kubernetes
 
 服务器: 10.96.0.10
 地址: 10.96.0.10#53
 名称: kubernetes.default.svc.cluster.local
 地址: 10.96.0.1
+```
 
 前两行应显示您的集群DNS的IP地址。后两行应显示kubernetes服务和其ClusterIP的完全限定域名(FQDN)。您可以通过运行kubectl get svc kubernetes命令来验证kubernetes服务的ClusterIP。
 
@@ -4960,9 +4964,11 @@ pod "coredns-76f75df574-n7qzk"已删除
 
 运行以下命令进行清理。
 
+```
 $ kubectl delete pod dnsutils
 
 $ kubectl delete -f sd-example.yml
+```
 
 ### 章节总结。
 
@@ -4970,7 +4976,7 @@ $ kubectl delete -f sd-example.yml
 
 集群DNS将Service名称解析为ClusterIP。这些是稳定的虚拟IP，在一个名为service network的特殊网络上。对于这个网络没有路由，但kube-proxy会配置所有集群节点将ClusterIP流量重定向到Pod网络上的Pod IP。
 
-11：Kubernetes存储
+## 11：Kubernetes存储
 
 存储和检索数据对于大多数实际业务应用程序至关重要。幸运的是，Kubernetes的持久卷子系统允许您连接提供高级数据管理服务的企业级存储系统，例如备份和恢复、复制、快照等。
 
@@ -5080,7 +5086,7 @@ CSI是一个开源项目，定义了一个行业标准接口，以便容器编�
 - 慢速存储（Mechanical）
 
 您希望您的应用程序使用这两种类型，因此为每种类型创建了一个存储类。
-```
+
 您需要部署一个需要100GB快速存储的新应用程序。为了实现这一目标，您创建了一个定义了Pod和PVC的YAML文件。Pod通过PVC请求一个卷，而PVC根据**sc-fast** SC定义了一个100GB的卷。
 
 您通过将YAML文件发送到API服务器来部署该应用程序。SC控制器观察到新的PVC，并指示CSI插件在外部存储系统上提供一个100GB SSD卷。外部系统创建卷并向CSI插件报告，然后CSI插件通知SC控制器并将其映射到PV。Pod可以挂载PV并使用它。
@@ -5499,8 +5505,10 @@ persistentvolume "pvc-f36b3771-6582-4830-ad43-fb1f1ed3820c" deleted
 
 删除**sc-fast-repl**存储类。
 
+```
 $ kubectl delete sc sc-fast-repl
 storageclass.storage.k8s.io "sc-fast-repl" deleted
+```
 
 ### 章节总结。
 
