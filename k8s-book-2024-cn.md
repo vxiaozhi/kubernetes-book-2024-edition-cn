@@ -2907,7 +2907,6 @@ Kubernetes将Pods视为临时对象，并在发生以下任何事件时删除它
 
 图7.1显示了一个客户端通过名为**app1**的Service连接到一个应用程序。客户端连接到Service的名称或IP，而Service将请求转发到其后面的应用程序Pods。
 
-7: Kubernetes Services 95
 
 ```
 图7.1-客户端通过Service访问Pods
@@ -2935,6 +2934,7 @@ Service使用标签和选择器来确定将流量发送到哪些Pods。这与将
 
 在此示例中，Service将流量发送到Pod A、Pod B和Pod D，因为它们都具有所需的标签。Pod D具有额外的标签并不重要。但是，它不会将流量发送到Pod C，因为它没有这两个标签。以下YAML定义了一个Deployment和一个Service。Deployment将创建具有**project=tkb**和**zone=prod**标签的Pods，而Service将向它们发送流量。
 
+```
 apiVersion：apps/v1
 kind：Deployment
 metadata：
@@ -2958,15 +2958,11 @@ metadata：
 name：tkb
 spec：
 ports：
-
-```
-7: Kubernetes Services 97
-```
-
 - port：8080
   selector：
   project：tkb <<==== 发送到具有这些标签的Pods
   zone：prod <<==== 发送到具有这些标签的Pods
+```
 
 **Services和EndpointSlices**
 每当您创建一个服务时，Kubernetes会自动创建一个关联的EndpointSlice来跟踪具有匹配标签的健康Pod。
@@ -5698,12 +5694,15 @@ $ git clone https://github.com/nigelpoulton/TheK8sBook.git
 
 运行以下命令以使用命令行字面值创建名为**testmap1**的ConfigMap，其中包含两个条目。Windows用户应该将每行末尾的反斜杠替换为重音符号。
 
+```
 $ kubectl create configmap testmap1 \
 --from-literal shortname=AOS \
 --from-literal longname="Agents of Shield"
+```
 
 运行以下命令以查看Kubernetes如何存储映射条目。
 
+```
 $ kubectl describe cm testmap1
 Name: testmap1
 Namespace: default
@@ -5727,13 +5726,16 @@ BinaryData
 ====
 
 Events: <none>
+```
 
 您可以看到它只是一个装扮成Kubernetes对象的键值对映射。
 
 以下命令使用**--from-file**标志从名为**cmfile.txt**的文件创建ConfigMap。该文件包含一行文本，您需要从本书的GitHub存储库的**configmaps**文件夹中运行该命令。
 
+```
 $ kubectl create cm testmap2 --from-file cmfile.txt
 configmap/testmap2 created
+```
 
 您将在下一节中检查这个ConfigMap。
 
@@ -5742,10 +5744,13 @@ configmap/testmap2 created
 ConfigMaps是一级API对象。这意味着您可以像任何其他API对象一样检查和查询它们。
 
 列出当前命名空间中的所有ConfigMaps。
+
+```
 $ kubectl get cm
 名称      数据   年龄
 testmap1  2    11分钟
 testmap2  1    2分钟23秒
+```
 
 以下的**kubectl describe**命令显示了有关您从本地文件创建的**testmap2**映射的一些有趣信息：
 
@@ -5753,8 +5758,7 @@ testmap2  1    2分钟23秒
 - _键_的名称与输入文件的名称相匹配（**cmfile.txt**）
 - _值_存储了文件的内容
 
-12：ConfigMaps和Secrets 183
-
+```
 $ kubectl describe cm testmap2
 名称：testmap2
 命名空间：default
@@ -5771,9 +5775,11 @@ BinaryData
 ====
 
 事件：<无>
+```
 
 您还可以使用**-o yaml**标志运行**kubectl get**命令以查看整个对象。
 
+```
 $ kubectl get cm testmap1 -o yaml
 apiVersion：v1
 数据：
@@ -5786,6 +5792,7 @@ creationTimestamp：“2024-01-09T14:16:03Z”
 命名空间：default
 resourceVersion：“20904”
 uid：87b03869-e29d-4744-b43b-cb6178bc61fe
+```
 
 您应该知道，ConfigMaps没有状态的概念（期望状态和实际状态）。这就是为什么它们有一个**数据**块而不是通常的**规范**和**状态**块。
 
@@ -5795,8 +5802,7 @@ uid：87b03869-e29d-4744-b43b-cb6178bc61fe
 
 以下YAML来自书籍的GitHub存储库中的**multimap.yml**文件，并定义了两个映射条目：**given**和**family**。它具有通常的**kind，apiVersion**和**metadata**字段。然而，正如之前提到的，它没有**spec**部分。相反，它有一个**data**部分，您在其中定义键值对的映射。
 
-12：ConfigMaps和Secrets 184
-
+```
 kind：ConfigMap
 apiVersion：v1
 metadata：
@@ -5804,14 +5810,18 @@ name：multimap
 data：
 given：Nigel
 family：Poulton
+```
 
 使用以下命令部署它。
 
+```
 $ kubectl apply -f multimap.yml
 configmap/multimap已创建
+```
 
 此下一个YAML对象看起来比前一个更复杂。但实际上更简单，因为**data**块中只有一个条目。它看起来更复杂是因为_value_条目包含一个完整的配置文件。
 
+```
 kind：ConfigMap
 apiVersion：v1
 metadata：
@@ -5823,6 +5833,7 @@ endpoint = 0.0.0.0:31001
 char = utf8
 vault = PLEX/test
 log-size = 512M
+```
 
 如果仔细观察，您会在键属性的名称后面看到管道字符（**|**）。这告诉Kubernetes将管道后面的所有内容视为单个字面值。因此，ConfigMap对象称为**test-config**，并且具有以下单个映射条目：
 
@@ -5837,13 +5848,15 @@ log-size = 512M
 
 使用以下命令部署它。它将创建一个名为**test-config**的新ConfigMap。
 
+```
 $ kubectl apply -f singlemap.yml
 configmap/test-config已创建
+```
 
 使用以下命令检查它。
 
-12：ConfigMaps和Secrets 185
 
+```
 $ kubectl describe cm test-config
 名称：test-config
 命名空间：default
@@ -5864,6 +5877,7 @@ BinaryData
 ====
 
 事件：<无>
+```
 
 **将ConfigMap数据注入Pod和容器**
 
@@ -6076,6 +6090,7 @@ given
 
 以下代码块被注释，以显示需要更改的行。
 
+```
 $ kubectl edit cm multimap
 
 # 请编辑下面的对象。以 '#' 开头的行将被忽略，
@@ -6093,12 +6108,16 @@ data:
 kind: ConfigMap
 metadata:
   <省略>
+```
 
 保存更改并检查更新是否出现在容器中。更改可能需要一分钟才会出现。
 
+```
 $ kubectl exec cmvol -- ls /etc/name
 City
 Country
+```
+
 恭喜您，通过_ConfigMap volume_，**multimap** ConfigMap的内容已经在容器的文件系统中显示出来，并且您已经测试了更新操作。
 
 ### 与Secrets一起实践
@@ -6109,18 +6128,14 @@ Secrets与ConfigMaps几乎相同 - 它们保存Kubernetes在运行时注入到�
 
 对于这个问题，快速答案是**_不_**。但是这里稍长一点的答案是...
 
-```
-12: ConfigMaps and Secrets 192
-```
 
-```
 尽管设计用于敏感数据，但Kubernetes并没有在集群存储中对Secrets进行加密。它只将它们转换为Base64编码的值，任何人都可以在没有密钥的情况下解码它们。幸运的是，大多数服务网格会加密网络流量，并且您可以使用EncryptionConfiguration对象配置加密在休息时。然而，许多人使用类似HashiCorp的Vault^10的工具来实现更完整和安全的秘密管理解决方案。
-```
+
 
 我们将重点介绍Kubernetes提供的基本秘密管理功能，即使结合第三方工具，它仍然非常有用。
 一个典型的秘密工作流程如下：
 
-```
+
 1. 创建秘密，并将其作为未加密对象持久化到集群存储中
 2. 调度使用该秘密的Pod
 3. Kubernetes通过网络将未加密的秘密传输到运行Pod的节点
@@ -6128,7 +6143,7 @@ Secrets与ConfigMaps几乎相同 - 它们保存Kubernetes在运行时注入到�
 5. 容器运行时通过内存中的tmpfs文件系统将秘密挂载到容器中，并将其从Base64解码为明文
 6. 应用程序使用该秘密
 7. 当您删除Pod时，Kubernetes会删除节点上的秘密副本（但保留集群存储中的副本）
-```
+
 
 ```
 即使您在集群存储中加密了秘密，并且有一个服务网格在网络传输过程中加密了它，Kubernetes仍然会将其作为明文挂载到容器中，以便应用程序在不需要解密或解码的情况下使用它。
@@ -6137,9 +6152,6 @@ Secrets与ConfigMaps几乎相同 - 它们保存Kubernetes在运行时注入到�
 Secrets的一个明显用例是用于在各个环境中使用的TLS终止代理。图12.5显示了一个配置有三个不同Secrets的单个镜像，用于三个不同的环境。Kubernetes在运行时将适当的Secret加载到每个容器中。
 ```
 
-(^10) https://www.vaultproject.io/
-
-12: ConfigMaps and Secrets 193
 
 ```
 Figure12.5-InjectingSecretsatruntime
