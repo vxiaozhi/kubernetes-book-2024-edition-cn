@@ -2989,7 +2989,7 @@ ClusterIP是默认的。它有一个名称和IP，被编程到内部网络中，
 我们将在服务发现章节中详细介绍。
 
 
-NodePort服务-从集群外部访问应用程序
+**NodePort服务-从集群外部访问应用程序**
 
 NodePort服务在ClusterIP服务的基础上添加了每个集群节点上外部客户端可以使用的专用端口。我们将这个专用端口称为“NodePort”。以下是一个称为skippy的NodePort服务的YAML示例。
 
