@@ -2988,13 +2988,10 @@ ClusterIP是默认的。它有一个名称和IP，被编程到内部网络中，
 
 我们将在服务发现章节中详细介绍。
 
-```
-NodePort服务-从集群外部访问应用程序
-```
 
-```
+NodePort服务-从集群外部访问应用程序
+
 NodePort服务在ClusterIP服务的基础上添加了每个集群节点上外部客户端可以使用的专用端口。我们将这个专用端口称为“NodePort”。以下是一个称为skippy的NodePort服务的YAML示例。
-```
 
 ```
 apiVersion: v1
@@ -3004,20 +3001,18 @@ name: skippy <<==== 注册到内部集群DNS（ClusterIP）
 spec:
 type: NodePort <<==== 服务类型
 ports:
-```
 
 - port: 8080 <<==== ClusterIP端口
   targetPort: 9000 <<==== 容器中的应用程序端口
   nodePort: 30050 <<==== 每个集群节点上的外部端口（NodePort）
   selector:
   app: hello-world
-
 ```
+
 将此内容发布到集群将创建一个具有通常可路由的内部IP和DNS名称的ClusterIP服务。它还会在每个集群节点上创建端口30050，并将其映射回ClusterIP。这意味着外部客户端可以将流量发送到任何集群节点的30050端口，并到达服务。
 图7.3显示了一个NodePort服务在每个集群节点上暴露了三个Pod的30050端口。步骤1显示一个外部客户端访问NodePort上的节点。步骤2显示节点将请求转发到集群内部服务的ClusterIP。
-```
 
-7: Kubernetes Services 99
+
 
 服务在步骤3中从EndpointSlice的始终最新的列表中选择一个Pod，并在步骤4中将其转发给所选的Pod。
 
@@ -3028,6 +3023,7 @@ ports:
 外部客户端可以将请求发送到任何集群节点，并且服务可以将请求发送到三个健康Pod中的任何一个。实际上，未来的请求可能会发送到其他Pod，因为服务执行基本的轮询负载均衡。
 
 然而，NodePort服务有两个重要的限制：
+
 - 他们使用30000-32767之间的高端口
 - 客户端需要知道节点的名称或IP，以及节点是否健康
 
@@ -3049,6 +3045,7 @@ ports:
 
 以下YAML创建一个在端口8080上监听的负载均衡服务，并将其映射到具有“project=tkb”标签的Pod上的端口9000。它会在后台自动创建所需的NodePort和ClusterIP结构。
 
+```
 apiVersion: v1
 kind: Service
 metadata:
@@ -3060,10 +3057,10 @@ spec:
       targetPort: 9000 <<==== 容器内的应用程序端口
   selector:
     project: tkb
+```
 
 您将在后面的实践部分中创建和使用负载均衡服务。
 
-7：Kubernetes服务101
 
 **服务理论摘要**
 
@@ -3075,7 +3072,7 @@ ClusterIP服务是默认的，提供内部集群网络上的可靠端点。NodeP
 
 负载均衡服务在底层云平台上创建一个负载均衡器，以及将流量从负载均衡器转发到Pod的所有结构和映射。
 
-### 与服务的实践
+### 服务实践
 
 本节将向您展示如何以声明性和命令式的方式处理服务。正如Kubernetes总是更喜欢使用YAML文件以声明性方式部署和管理所有内容。但是，了解命令式命令也很有帮助。
 
@@ -3088,10 +3085,12 @@ ClusterIP服务是默认的，提供内部集群网络上的可靠端点。NodeP
 
 如果您尚未拥有书籍的GitHub仓库的副本，请使用以下命令进行克隆，然后切换到“services”目录。
 
+```
 $ git clone https://github.com/nigelpoulton/TheK8sBook.git
 正在克隆到 'TheK8sBook'...
 
 $ cd TheK8sBook/services
+```
 
 运行以下命令部署一个示例应用程序。它是一个部署，创建十个运行在端口8080上并带有“chapter=services”标签的Web应用程序的Pod。
 
