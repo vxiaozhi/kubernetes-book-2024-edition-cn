@@ -2084,6 +2084,7 @@ Context "tkb" modified.
 
 如果您不理解YAML文件中的所有内容，不要担心，您只需要知道它定义了三个对象，并将每个对象都定位到**shield**命名空间。
 
+```
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -2112,18 +2113,22 @@ metadata：
 namespace：shield <<==== 命名空间
 name：triskelion
 <Snip>
+```
 
 5：带有命名空间的虚拟集群 68
 
 使用以下命令部署它。如果出现关于ServiceAccount缺少注释的警告，请不必担心。
 
+```
 $ kubectl apply -f app.yml
 serviceaccount/default已配置
 service/the-bus已配置
 pod/triskelion已创建
+```
 
 运行几个命令来验证所有三个对象是否在**shield**命名空间中。如果您已经配置**kubectl**自动定位到shield命名空间，则不需要添加**-n shield**标志。
 
+```
 $ kubectl get pods -n shield
 NAME READY STATUS RESTARTS AGE
 triskelion 1/1 Running 0 48s
@@ -2131,9 +2136,11 @@ triskelion 1/1 Running 0 48s
 $ kubectl get svc -n shield
 NAME TYPE CLUSTER-IP EXTERNAL-IP PORT(S) AGE
 the-bus LoadBalancer 10.43.30.174 localhost 8080:31112/TCP 52s
+```
 
 现在应用程序已部署，使用**curl**或您的浏览器连接到它。只需将浏览器或**curl**命令指向**EXTERNAL-IP**列中的值，端口为8080。如果您的情况与书中的示例相似，您将连接到localhost:8080。
 
+```
 $ curl localhost:8080
 
 <!DOCTYPE html>
@@ -2141,6 +2148,7 @@ $ curl localhost:8080
 <head>
 <title>AOS</title>
 <Snip>
+```
 
 恭喜您。您已创建了一个命名空间并将应用程序部署到其中。连接到应用程序与连接到默认命名空间中的应用程序没有任何区别。
 
