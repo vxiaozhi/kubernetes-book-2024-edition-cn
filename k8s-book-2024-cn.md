@@ -3182,12 +3182,15 @@ External Traffic Policy 决定命中服务的流量是否在所有集群节点�
 ```
 图7.7
 ```
+
 它能够正常工作。该应用程序运行在一个容器中，并监听8080端口。您创建了一个负载均衡服务，它监听8080端口，并将流量转发到每个集群节点上的一个NodePort服务的31755端口，然后该服务再将流量转发到8080端口的ClusterIP服务。从那里，流量会被发送到托管应用程序副本的Pod上的8080端口。
 
 接下来，您将以声明性的方式再次执行相同的操作。不过，在此之前，您需要进行清理。
 
+```
 $ kubectl delete svc svc-test
-service "svc-test" 已删除
+service "svc-test" deleted
+```
 
 **声明性的方式**
 
@@ -3197,6 +3200,7 @@ service "svc-test" 已删除
 
 以下YAML代码来自于**lb.yml**文件，您将使用它来以声明性的方式部署一个负载均衡服务。
 
+```
 kind: Service
 apiVersion: v1
 metadata:
@@ -3209,6 +3213,7 @@ ports:
   targetPort: 8080 <<==== 容器内应用程序端口
   selector:
   chapter: services
+```
 
 让我们逐步解释一下。
 
@@ -3220,18 +3225,21 @@ ports:
 
 使用以下命令部署它。
 
-7: Kubernetes Services 106
 
+```
 $ kubectl apply -f lb.yml
-service/cloud-lb 已创建
+service/cloud-lb created
+```
 
 **检查服务**
 
 服务是常规的API资源，您可以使用通常的**kubectl get**和**kubectl describe**命令来检查它们。
 
+```
 $ kubectl get svc cloud-lb
 名称 类型 集群IP 外部IP 端口
 cloud-lb LoadBalancer 10.43.191.202 212.2.247.202 9000:30202/TCP
+```
 
 输出中的**EXTERNAL-IP**列显示为**<pending>**，这意味着云平台正在配置负载均衡器并分配IP地址。请不断刷新命令，直到出现一个地址。
 
@@ -3243,6 +3251,7 @@ cloud-lb LoadBalancer 10.43.191.202 212.2.247.202 9000:30202/TCP
 
 这些示例来自于一个运行双栈网络的集群。请注意，存在两个EndpointSlice——一个用于IPv4映射，另一个用于IPv6。您的集群可能只有IPv4映射。
 
+```
 $ kubectl get endpointslices
 名称 地址类型 端口 Endpoints 年龄
 lb-cloud-n7jg4 IPv4 8080 10.42.1.16,10.42.1.17,10.42.0.19 + 7 more... 2m1s
@@ -3258,7 +3267,6 @@ kubernetes.io/service-name=svc-test
 地址类型: IPv4
 端口:
 
-7: Kubernetes Services 107
 
 名称 端口 协议
 
@@ -3276,6 +3284,7 @@ Endpoints:
 - 地址：10.42.1.17
   <剪辑>
   事件：无
+```
 
 **kubectl describe** 命令的完整输出中包含每个健康的 Pod 的块，其中包含有用的信息。如果一个 Service 匹配超过 100 个 Pod，它将具有多个 EndpointSlice。
 
@@ -3283,9 +3292,11 @@ Endpoints:
 
 运行以下命令以删除示例中创建的 Deployment 和 Services。当删除相关联的 Service 时，Kubernetes 会自动删除 Endpoints 和 EndpointSlices。
 
+```
 $ kubectl delete -f deploy.yml -f lb.yml
 deployment.apps "svc-test" 已删除
 service "cloud-lb" 已删除
+```
 
 ### 章节总结。
 
@@ -3297,10 +3308,9 @@ ClusterIP Services 在 Kubernetes 内部网络上提供可靠的网络连接，N
 
 ## 8:Ingress
 
-```
 Ingress 是通过单个 LoadBalancer Service 访问多个 Web 应用程序的全部内容。
 在阅读本章之前，您需要对 Kubernetes Services 有一定的了解。如果您还没有这方面的知识，请考虑返回并先阅读前一章节。本章分为以下几个部分：
-```
+
 
 - 为 Ingress 做准备
 - Ingress 架构
@@ -3311,17 +3321,17 @@ Ingress 是通过单个 LoadBalancer Service 访问多个 Web 应用程序的全
 - _LoadBalancer_ 指的是 **type=LoadBalancer** 的 Kubernetes Service 对象
 - _load balancer_ 指的是您云平台上的面向互联网的负载均衡器之一
 
-```
+
 例如，当您创建一个 Kubernetes LoadBalancer Service 时，Kubernetes 会与您的云平台进行通信，并提供一个云负载均衡器。
 Ingress 在 Kubernetes 版本 1.19 中已经晋升为一般可用（GA）状态，在此之前经过了 15 个版本的测试。在它处于 alpha 和 beta 阶段的 3+ 年时间里，服务网格变得越来越受欢迎，并且功能上存在一些重叠。因此，如果您计划部署服务网格，可能就不需要 Ingress。
-```
+
 
 ### 为 Ingress 做准备。
 
-```
+
 前一章节向您展示了如何使用 NodePort 和 LoadBalancer Services 将应用程序暴露给外部客户端。然而，这两者都有局限性。
 NodePort Services 只能在高端口号上工作，客户端需要跟踪节点 IP 地址。LoadBalancer Services 解决了这个问题，但需要在内部 Services 和云负载均衡器之间建立一对一的映射关系。这意味着具有 25 个面向互联网的应用程序的集群将需要 25 个云负载均衡器，而且云负载均衡器是需要花钱的！您的云平台还可能限制您可以创建的负载均衡器的数量。
-```
+
 
 Ingress 通过让您通过单个云负载均衡器来暴露多个 Services 来解决这个问题。
 
@@ -3331,10 +3341,10 @@ Ingress 通过让您通过单个云负载均衡器来暴露多个 Services 来�
 
 Ingress 在 **networking.k8s.io/v1** API 子组中定义，并且它需要常规的两个构造：
 
-```
+
 1. 一个资源
 2. 一个控制器
-```
+
 
 资源 _定义_ 路由规则，控制器 _实现_ 这些规则。
 
@@ -3343,9 +3353,9 @@ Ingress 在 **networking.k8s.io/v1** API 子组中定义，并且它需要常规
 一旦您拥有了一个 _Ingress 控制器_，您就可以使用规则部署 _Ingress 资源_，告诉控制器如何路由请求。
 关于"路由"的话题，Ingress在OSI模型的第7层操作，也被称为"应用层"。这意味着它可以检查HTTP头部信息，并根据主机名和路径转发流量。
 
-```
-注意：OSI模型是TCP/IP网络的行业标准参考模型，共有七层，编号为1-7。较低的层级涉及信号和电子学，中间层处理通过确认和重试确保可靠性，较高的层级则增加了用于HTTP等服务的功能。Ingress在第7层操作，也被称为应用层，并实现了HTTP智能。
-```
+
+> 注意：OSI模型是TCP/IP网络的行业标准参考模型，共有七层，编号为1-7。较低的层级涉及信号和电子学，中间层处理通过确认和重试确保可靠性，较> 高的层级则增加了用于HTTP等服务的功能。Ingress在第7层操作，也被称为应用层，并实现了HTTP智能。
+
 
 下表展示了如何根据主机名和路径将流量路由到后端的ClusterIP服务。
 
@@ -3376,51 +3386,41 @@ hydra.mcu.com   mcu.com/hydra   hydra
 
 如果您还没有克隆本书的GitHub仓库，请使用以下命令进行克隆。
 
-```
-8: Ingress 111
-```
 
 ```
 $ git clone https://github.com/nigelpoulton/TheK8sBook.git
-正在克隆...
+Cloning from...
 ```
 
-```
 切换到TheK8sBook/ingress目录，并从该目录运行所有命令。您将完成以下所有步骤：
-```
 
-```
-1.安装NGINX Ingress控制器
-2.配置一个Ingress类
-3.部署一个示例应用
-4.配置一个Ingress对象
-5.检查Ingress对象
-6.配置DNS名称解析
-7.测试Ingress
-```
+
+1. 安装NGINX Ingress控制器
+1. 配置一个Ingress类
+1. 部署一个示例应用
+1. 配置一个Ingress对象
+1. 检查Ingress对象
+1. 配置DNS名称解析
+1. 测试Ingress
+
 
 **安装NGINX Ingress控制器**
 
-```
+
 您将从Kubernetes GitHub仓库的一个YAML文件中安装NGINX控制器。它会安装一系列的Kubernetes构建，包括命名空间、服务账户、配置映射、角色、角色绑定等等。
 使用以下命令进行安装。由于URL太长，我将命令分成了两行，您需要在一行上运行它。
-```
+
 
 ```
 $ kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.9.4/deploy/static/provider/cloud/deploy.yaml
-```
 
-```
-创建命名空间/ingress-nginx
-创建服务账户/ingress-nginx
-<省略>
+namespace/ingress-nginx created
+serviceaccount/ingress-nginx created
+<Snip
 ```
 
 运行以下命令检查**ingress-nginx**命名空间，并确保_controller_ Pod正在运行。进入运行阶段可能需要几秒钟时间，Windows用户需要将第一行末尾的反斜杠(\)替换为重音符(')。
 
-```
-8: Ingress 112
-```
 
 ```
 $ kubectl get pods -n ingress-nginx \
@@ -3433,20 +3433,17 @@ ingress-nginx-admission-create-789md 0/1 已完成 0 25s
 ingress-nginx-admission-patch-tc4cl 0/1 已完成 0 25s
 ingress-nginx-controller-7445ddc6c4-csf98 0/1 运行中 0 26s
 ```
+
 **Ingress类别**
 
-```
 Ingress类别允许您在单个集群上运行多个Ingress控制器。该过程很简单：
-```
 
-```
-1.将每个Ingress控制器分配给一个Ingress类别
-2.创建Ingress对象时，将它们分配给一个Ingress类别
-```
+1. 将每个Ingress控制器分配给一个Ingress类别
+2. 创建Ingress对象时，将它们分配给一个Ingress类别
 
-```
+
 如果您按照这样做，您将至少有一个名为nginx的Ingress类别。当您安装NGINX控制器时，就会创建它。
-```
+
 
 ```
 $ kubectl get ingressclass
@@ -3454,9 +3451,8 @@ $ kubectl get ingressclass
 nginx   k8s.io/ingress-nginx      <none>    2m25s
 ```
 
-```
+
 如果您的集群已经有一个Ingress控制器，那么您将有多个类别。使用以下命令更详细地查看nginx Ingress类别。对于Ingress类别对象没有简称。
-```
 
 ```
 $ kubectl describe ingressclass nginx
@@ -3473,7 +3469,6 @@ app.kubernetes.io/version=1.9.4
 
 当Ingress控制器和Ingress类别就位后，您就可以部署相同的环境并配置一个Ingress对象了。
 
-8: Ingress 113
 
 **配置基于主机和路径的路由**
 
@@ -3481,17 +3476,15 @@ app.kubernetes.io/version=1.9.4
 
 您将完成以下所有步骤：
 
-```
-1.部署名为shield的应用程序，并将其前置为名为svc-shield的ClusterIP服务（后端）
-2.部署名为hydra的应用程序，并将其前置为名为svc-hydra的ClusterIP服务（后端）
-3.部署一个Ingress对象，为以下主机名和路径创建一个单独的负载均衡器和路由规则
-```
+- 1. 部署名为shield的应用程序，并将其前置为名为svc-shield的ClusterIP服务（后端）
+- 2. 部署名为hydra的应用程序，并将其前置为名为svc-hydra的ClusterIP服务（后端）
+- 3. 部署一个Ingress对象，为以下主机名和路径创建一个单独的负载均衡器和路由规则
+    - 基于主机：shield.mcu.com >> svc-shield
+    - 基于主机：hydra.mcu.com >> svc-hydra
+    - 基于路径：mcu.com/shield >> svc-shield
+    - 基于路径：mcu.com/hydra >> svc-hydra
 
-- 基于主机：shield.mcu.com >> svc-shield
-- 基于主机：hydra.mcu.com >> svc-hydra
-- 基于路径：mcu.com/shield >> svc-shield
-- 基于路径：mcu.com/hydra >> svc-hydra
-  4.配置DNS名称解析，使shield.mcu.com、hydra.mcu.com和mcu.com指向负载均衡器
+- 4. 配置DNS名称解析，使shield.mcu.com、hydra.mcu.com和mcu.com指向负载均衡器
 
 图8.2显示使用基于主机的路由的整体架构。
 
@@ -3501,18 +3494,12 @@ app.kubernetes.io/version=1.9.4
 
 流量流向shield Pods的步骤如下：
 
-```
-1.客户端将流量发送到shield.mcu.com或mcu.com/shield
-2.DNS名称解析确保流量传递到负载均衡器
-```
+1. 客户端将流量发送到shield.mcu.com或mcu.com/shield
+2. DNS名称解析确保流量传递到负载均衡器
+3. Ingress控制器读取HTTP标头并查找主机名（shield.mcu.com）或路径（mcu.com/shield）
+4. Ingress规则触发并将流量路由到svc-shield ClusterIP后端服务
+5. ClusterIP服务确保流量到达shield Pod
 
-8: Ingress 114
-
-```
-3.Ingress控制器读取HTTP标头并查找主机名（shield.mcu.com）或路径（mcu.com/shield）
-4.Ingress规则触发并将流量路由到svc-shield ClusterIP后端服务
-5.ClusterIP服务确保流量到达shield Pod
-```
 
 **部署示例环境**
 
@@ -3525,11 +3512,13 @@ app.kubernetes.io/version=1.9.4
 
 使用以下命令部署它。
 
+```
 $ kubectl apply -f app.yml
-service/svc-shield已创建
-service/svc-hydra已创建
-pod/shield已创建
-pod/hydra已创建
+service/svc-shield created
+service/svc-hydra created
+pod/shield created
+pod/hydra created
+```
 
 一旦Pods和Services正常运行，就可以继续下一节创建Ingress。
 
@@ -3537,7 +3526,7 @@ pod/hydra已创建
 
 您将部署在ig-all.yml文件中定义的Ingress对象。它描述了一个名为mcu-all的Ingress对象，带有四个规则。
 
-8: Ingress 115
+```
 1 apiVersion: networking.k8s.io/v1
 2 kind: Ingress
 3 metadata:
@@ -3584,21 +3573,16 @@ pod/hydra已创建
 44 name: svc-hydra
 45 port:
 46 number: 8080
+```
 
 让我们一步一步来。
 
 前两行指示Kubernetes根据**networking.k8s.io/v1** API中的方案部署一个Ingress对象。
 
-```
-8: Ingress 116
-```
-
-```
 第四行为Ingress对象指定一个名称。
 第六行的注释告诉控制器尽力重写路径，使其与应用期望的路径相匹配。此示例将传入的路径重写为“/”。例如，命中mcu.com/shield路径的流量将被重写为mcu.com/。您将很快看到一个示例。此注释专用于NGINX Ingress控制器，如果您使用其他控制器，您需要将其注释掉。
 第八行的spec.ingressClassName字段告诉Kubernetes此Ingress对象专用于您之前安装的NGINX Ingress控制器。如果您使用其他Ingress控制器，您需要更改此行或将其注释掉。
 该文件包含四条规则：
-```
 
 - 第10-19行定义了一个基于主机的规则，用于处理到达shield.mcu.com的流量
 - 第20-29行定义了一个基于主机的规则，用于处理到达hydra.mcu.com的流量
@@ -3608,6 +3592,7 @@ pod/hydra已创建
 让我们先看一个基于主机的规则的示例，然后再看一个基于路径的规则。
 以下是一个基于主机的规则示例，当流量通过shield.mcu.com到达根路径“/”时，它将被转发到监听8080端口的名为svc-shield的ClusterIP后端Service。
 
+```
 - host: shield.mcu.com <<==== 流量通过此主机名到达
   [http:](http:)
   paths:
@@ -3618,15 +3603,11 @@ pod/hydra已创建
   name: svc-shield <<==== 名为"svc-shield"的Service
   port: <<==== 该Service监听
   number: 8080 <<==== 的8080端口
-
 ```
+
 以下是一个基于路径的规则示例，当流量到达mcu.com/shield时触发，它将被路由到同样端口上的svc-shield后端Service。
-```
 
 ```
-8: Ingress 117
-```
-
 - host: mcu.com <<==== 流量通过此主机名到达
   [http:](http:)
   paths:
@@ -3637,26 +3618,29 @@ pod/hydra已创建
   name: svc-shield <<==== 名为"svc-shield"的Service
   port: <<==== 该Service监听
   number: 8080 <<==== 的8080端口
+```
 
-```
 使用以下命令部署Ingress对象。
-```
+
 
 ```
 $ kubectl apply -f ig-all.yml
 ingress.networking.k8s.io/mcu-all created
 ```
 
-```
+
 检查Ingress对象
-```
+
 “列出默认命名空间中的所有Ingress对象。如果您的集群在云上，获取地址可能需要一分钟左右的时间，因为云平台需要配置负载均衡器。”
+
 ```
 $ kubectl get ing
 名称 类别 主机 地址 端口
 mcu-all nginx shield.mcu.com,hydra.mcu.com,mcu.com 212.2.246.150 80
 ```
+
 “**类别**字段显示处理此规则集的Ingress类是哪个。如果您只有一个Ingress控制器并且没有配置类别，它可能显示为**<None>**。**主机**字段是Ingress将处理流量的主机名列表。**地址**字段是负载均衡器的端点。如果您在云上，它将是一个公共IP或公共DNS名称。如果您在本地集群上，它可能是localhost。**端口**字段可以是80或443。关于端口，Ingress仅支持HTTP和HTTPS。描述Ingress。输出被截断以适应页面。”
+
 ```
 $ kubectl describe ing mcu-all
 名称: mcu-all
@@ -3681,6 +3665,7 @@ mcu.com /shield svc-shield:8080 (10.36.1.5:8080)
 
 正常 同步 27s (x2 over 28s) nginx-ingress-controller 安排同步
 ```
+
 让我们逐步了解输出内容。 **地址**行是Ingress创建的负载均衡器的IP或DNS名称。在本地集群上可能是localhost。**默认后端**是控制器将到达的主机名或路径上的流量发送到的位置，如果没有路由。并非所有的Ingress控制器都实现了默认后端。规则定义了_hosts_，_路径_和_后端_之间的映射关系。请记住，**后端**通常是发送流量到Pods的ClusterIP服务。您可以使用注释来定义控制器特定的功能和与云后端的集成。此示例告诉控制器将所有路径重写为看起来像它们是在根目录“/”上到达的。这是一种尽力而为的方法，正如您稍后将看到的，它对于所有应用程序都不起作用。此时，负载均衡器已创建。如果您在云平台上，您可能可以通过云控制台查看它。图8.3显示了如果您的集群在Google Kubernetes Engine（GKE）上，它在Google云后端上的外观。
 Windows用户需要以管理员身份打开**notepad.exe**，并打开位于**C:\Windows\System32\drivers\etc**的**hosts**文件。确保打开对话窗口设置为打开**所有文件 (*.*)**。
 
@@ -3696,9 +3681,9 @@ $ sudo vi /etc/hosts
 212.2.246.150 mcu.com
 ```
 
-```
+
 记得保存您的更改。
-```
+
 
 完成后，您发送到shield.mcu.com、hydra.mcu.com或mcu.com的任何流量都将发送到入口负载均衡器。
 
