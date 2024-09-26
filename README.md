@@ -10,3 +10,7 @@ The.Kubernetes.Book.2024.Edition 中文
 
 - [split_markdown4gpt](https://github.com/twardoch/split-markdown4gpt)
 - [Split Markdown for Ulysses import](https://github.com/goetzf/Split-Markdown-for-Ulysses)
+
+## 自动生成目录
+
+- [github-markdown-toc](https://github.com/vxiaozhi/github-markdown-toc)
