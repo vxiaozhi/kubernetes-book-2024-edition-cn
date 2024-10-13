@@ -3615,52 +3615,53 @@ pod/hydra created
 您将部署在ig-all.yml文件中定义的Ingress对象。它描述了一个名为mcu-all的Ingress对象，带有四个规则。
 
 ```
-1 apiVersion: networking.k8s.io/v1
-2 kind: Ingress
-3 metadata:
-4 name: mcu-all
-5 annotations:
-6 nginx.ingress.kubernetes.io/rewrite-target: /
-7 spec:
-8 ingressClassName: nginx
-9 rules:
-10 - host: shield.mcu.com <<==== shield应用的主机规则
-11 [http:](http:)
-12 paths:
-13 - path: /
-14 pathType: Prefix
-15 backend:
-16 service:
-17 name: svc-shield
-18 port:
-19 number: 8080
-20 - host: hydra.mcu.com <<==== hydra应用的主机规则
-21 [http:](http:)
-22 paths:
-23 - path: /
-24 pathType: Prefix
-25 backend:
-26 service:
-27 name: svc-hydra
-28 port:
-29 number: 8080
-30 - host: mcu.com
-31 [http:](http:)
-32 paths:
-33 - path: /shield <<==== shield应用的路径规则
-34 pathType: Prefix
-35 backend:
-36 service:
-37 name: svc-shield
-38 port:
-39 number: 8080
-40 - path: /hydra <<==== hydra应用的路径规则
-41 pathType: Prefix
-42 backend:
-43 service:
-44 name: svc-hydra
-45 port:
-46 number: 8080
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mcu-all
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: shield.mcu.com # Host rule for shield app
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: svc-shield
+            port:
+              number: 8080
+  - host: hydra.mcu.com # Host rule for hydra app
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: svc-hydra
+            port:
+              number: 8080
+  - host: mcu.com
+    http:
+      paths:
+      - path: /shield # Path rule for shield app
+        pathType: Prefix
+        backend:
+          service:
+            name: svc-shield
+            port:
+              number: 8080
+      - path: /hydra # Path rule for hydra app
+        pathType: Prefix
+        backend:
+          service:
+            name: svc-hydra
+            port:
+              number: 8080
+
 ```
 
 让我们一步一步来。
